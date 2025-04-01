@@ -19,7 +19,7 @@ function Load-Template {
         [string]$fileName,
         [string]$basePath
     )
-    Load-JsonFile -location "$basePathreta path/$fileName.json"
+    Load-JsonFile -location $basePath + "templates/$fileName.json"
 }
 
 function Process-Leaf {
