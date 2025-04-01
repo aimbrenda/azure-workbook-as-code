@@ -16,7 +16,7 @@ load_json_file() {
 load_template() {
     local file_name=$1
     local base_path=$2
-    load_json_file "${base_path}path/${file_name}.json"
+    load_json_file "${base_path}templates/${file_name}.json"
 }
 
 # Function to process leaf nodes
