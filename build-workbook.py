@@ -22,7 +22,7 @@ def load_json_file(location):
 
 
 def load_template(file_name, base_path):
-    return load_json_file(f"{base_path}templateposition/{file_name}.json")
+    return load_json_file(f"{base_path}templates/{file_name}.json")
 
 
 def process_leaf(node, base_path, parent):
