@@ -109,18 +109,26 @@ def validate_output(output, schema_url):
 
 def main():
     """Main function to load workbook, process and validate."""
-    if len(sys.argv) != 4:
-        raise Exception("Usage: script.py <workbook_path> <base_path> <out_path>")
+    if len(sys.argv) < 4 or len(sys.argv) > 5:
+        raise Exception("Usage: script.py <workbook_path> <base_path> <out_file> <validate_against_schema>(optional "
+                        "default 0)")
 
-    workbook_path, base_path, out_path = sys.argv[1:4]
-    schema_url = 'https://raw.githubusercontent.com/Microsoft/Application-Insights-Workbooks/master/schema/workbook.json'
+    validate_against_schema = False
+
+    if len(sys.argv) == 4:
+        workbook_path, base_path, out_path = sys.argv[1:4]
+    else:
+        workbook_path, base_path, out_path = sys.argv[1:4]
+        validate_against_schema = sys.argv[4].lower() == '1'
 
     # Load the workbook YAML
     input_workbook = load_yaml_file(workbook_path)
     output = depth_first_traversal(input_workbook['workbook'], base_path)
 
     # Validate the output JSON
-    validate_output(output, schema_url)
+    if validate_against_schema:
+        schema_url = 'https://raw.githubusercontent.com/Microsoft/Application-Insights-Workbooks/master/schema/workbook.json'
+        validate_output(output, schema_url)
 
     # Write the output to a file
     with open(out_path, 'w') as outf:

@@ -1,0 +1,15 @@
+{
+  "version": "KqlParameterItem/1.0",
+  "name": "Subscription",
+  "type": 6,
+  "isRequired": true,
+  "typeSettings": {
+    "additionalResourceOptions": [],
+    "includeAll": false,
+    "showDefault": false
+  },
+  "timeContext": {
+    "durationMs": 86400000
+  },
+  "value": "/subscriptions/#{subscriptionID}#"
+}

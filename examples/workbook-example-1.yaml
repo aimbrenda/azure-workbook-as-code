@@ -1,0 +1,60 @@
+workbook:
+  items:
+    - type: group
+      name: "Main"
+      items:
+        - type: parameters
+          items:
+            - 'azure-workbook-as-code/parameters/subscription.json'
+            - 'azure-workbook-as-code/parameters/resource-group.json'
+            - 'azure-workbook-as-code/parameters/time-range.json'
+        - type: tabs
+          name: "Tabs"
+          parameterName: customTab
+          items:
+            - value: AppService
+              label: "App Service Visuals"
+              default: true
+            - value: Dependencies
+              label: "Dependencies Visuals"
+            - value: WebPerformances
+              label: "Web Performance Visuals"
+        - type: group
+          name: "App Service Visuals"
+          items:
+            - type: parameters
+              items:
+                - 'azure-workbook-as-code/parameters/app-service.json'
+            - type: visual
+              item: 'azure-workbook-as-code/visuals/appservice-incoming-http-requests-by-status-code.json'
+              customWidth: '100'
+          conditionalVisibility:
+            - parameterName: customTab
+              value: AppService
+        - type: group
+          name: "Dependencies Visuals"
+          items:
+            - type: parameters
+              items:
+                - 'azure-workbook-as-code/parameters/application-insights.json'
+            - type: visual
+              item: 'azure-workbook-as-code/visuals/applicationinsights-dependencies-by-http-status-code.json'
+              customWidth: '100'
+          conditionalVisibility:
+            - parameterName: customTab
+              value: Dependencies
+        - type: group
+          name: "Web Performance Visuals"
+          items:
+            - type: parameters
+              items:
+                - 'azure-workbook-as-code/parameters/application-insights.json'
+            - type: visual
+              item: 'azure-workbook-as-code/visuals/applicationinsights-browser-page-load-time.json'
+              customWidth: '50'
+            - type: visual
+              item: 'azure-workbook-as-code/visuals/applicationinsights-page-views.json'
+              customWidth: '50'
+          conditionalVisibility:
+            - parameterName: customTab
+              value: WebPerformances

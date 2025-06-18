@@ -1,0 +1,20 @@
+{
+  "version": "KqlParameterItem/1.0",
+  "name": "AppServiceName",
+  "label": "App Service Name",
+  "type": 5,
+  "isRequired": true,
+  "query": "Resources\n| where type =~ 'microsoft.web/sites' and resourceGroup =~ \"{ResourceGroup:name}\"",
+  "crossComponentResources": [
+    "{Subscription}"
+  ],
+  "typeSettings": {
+    "additionalResourceOptions": [],
+    "showDefault": false
+  },
+  "timeContext": {
+    "durationMs": 86400000
+  },
+  "queryType": 1,
+  "resourceType": "microsoft.resourcegraph/resources"
+}
