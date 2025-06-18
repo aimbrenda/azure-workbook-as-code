@@ -1,0 +1,33 @@
+{
+  "type": 10,
+  "content": {
+    "version": "MetricsItem/2.0",
+    "size": 0,
+    "chartType": 2,
+    "resourceType": "microsoft.insights/components",
+    "metricScope": 0,
+    "resourceParameter": "ApplicationInsightsName",
+    "resourceIds": [
+      "{ApplicationInsightsName}"
+    ],
+    "timeContextFromParameter": "TimeRange",
+    "timeContext": {
+      "durationMs": 14400000
+    },
+    "metrics": [
+      {
+        "namespace": "microsoft.insights/components",
+        "metric": "microsoft.insights/components-Server-dependencies/count",
+        "aggregation": 7,
+        "splitBy": [
+          "dependency/resultCode"
+        ]
+      }
+    ],
+    "title": "HTTP Status Code by Dependency Requests",
+    "gridSettings": {
+      "rowLimit": 10000
+    }
+  },
+  "name": "metric - 8"
+}

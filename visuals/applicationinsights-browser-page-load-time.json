@@ -1,0 +1,30 @@
+{
+  "type": 10,
+  "content": {
+    "version": "MetricsItem/2.0",
+    "size": 0,
+    "chartType": 2,
+    "resourceType": "microsoft.insights/components",
+    "metricScope": 0,
+    "resourceParameter": "ApplicationInsightsName",
+    "resourceIds": [
+      "{ApplicationInsightsName}"
+    ],
+    "timeContextFromParameter": "TimeRange",
+    "timeContext": {
+      "durationMs": 14400000
+    },
+    "metrics": [
+      {
+        "namespace": "microsoft.insights/components",
+        "metric": "microsoft.insights/components-Browser-browserTimings/totalDuration",
+        "aggregation": 4
+      }
+    ],
+    "title": "Browser page load time",
+    "gridSettings": {
+      "rowLimit": 10000
+    }
+  },
+  "name": "metric - 23"
+}

@@ -1,0 +1,45 @@
+{
+  "type": 10,
+  "content": {
+    "version": "MetricsItem/2.0",
+    "size": 0,
+    "chartType": 4,
+    "resourceType": "microsoft.web/sites",
+    "metricScope": 0,
+    "resourceParameter": "AppServiceName",
+    "resourceIds": [
+      "{AppServiceName}"
+    ],
+    "timeContextFromParameter": "TimeRange",
+    "timeContext": {
+      "durationMs": 604800000
+    },
+    "metrics": [
+      {
+        "namespace": "microsoft.web/sites",
+        "metric": "microsoft.web/sites--Http2xx",
+        "aggregation": 1
+      },
+      {
+        "namespace": "microsoft.web/sites",
+        "metric": "microsoft.web/sites--Http3xx",
+        "aggregation": 1
+      },
+      {
+        "namespace": "microsoft.web/sites",
+        "metric": "microsoft.web/sites--Http4xx",
+        "aggregation": 1
+      },
+      {
+        "namespace": "microsoft.web/sites",
+        "metric": "microsoft.web/sites--Http5xx",
+        "aggregation": 1
+      }
+    ],
+    "title": "Incoming HTTP Requests by Status Code",
+    "gridSettings": {
+      "rowLimit": 10000
+    }
+  },
+  "name": "metric - 15"
+}

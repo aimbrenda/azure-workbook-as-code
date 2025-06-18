@@ -1,0 +1,20 @@
+{
+  "version": "KqlParameterItem/1.0",
+  "name": "ApplicationInsightsName",
+  "label": "Application Insights Name",
+  "type": 5,
+  "isRequired": true,
+  "query": "Resources\n| where type =~ 'microsoft.insights/components' and resourceGroup =~ \"{ResourceGroup:name}\"",
+  "crossComponentResources": [
+    "{Subscription}"
+  ],
+  "typeSettings": {
+    "additionalResourceOptions": [],
+    "showDefault": false
+  },
+  "timeContext": {
+    "durationMs": 86400000
+  },
+  "queryType": 1,
+  "resourceType": "microsoft.resourcegraph/resources"
+}

@@ -1,0 +1,17 @@
+{
+  "version": "KqlParameterItem/1.0",
+  "name": "ResourceGroup",
+  "label": "Resource Group",
+  "type": 2,
+  "isRequired": true,
+  "query": "Resources\n| summarize Count = count() by resourceGroup\n| order by Count desc\n| extend Rank = row_number()\n| project value = resourceGroup, label = resourceGroup, selected = Rank == 1",
+  "crossComponentResources": [
+    "{Subscription}"
+  ],
+  "typeSettings": {
+    "additionalResourceOptions": [],
+    "showDefault": false
+  },
+  "queryType": 1,
+  "resourceType": "microsoft.resourcegraph/resources"
+}
