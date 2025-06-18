@@ -1,161 +1,105 @@
-param (
-    [string]$workbookPath,
-    [string]$basePath,
-    [string]$outPath
+# Requires -Modules powershell-yaml
+
+param(
+    [Parameter(Mandatory=$true)][string]$workbookPath,
+    [Parameter(Mandatory=$true)][string]$basePath,
+    [Parameter(Mandatory=$true)][string]$outFile
 )
 
-function Load-YamlFile {
-    param ([string]$location)
-    yq eval -o=json $location | ConvertFrom-Json
+function Load-YamlFile($location) {
+    try {
+        return ConvertFrom-Yaml (Get-Content $location -Raw)
+    } catch {
+        throw "Error loading YAML file ${location}: $_"
+    }
 }
 
-function Load-JsonFile {
-    param ([string]$location)
-    Get-Content -Raw -Path $location | ConvertFrom-Json
+function Load-JsonFile($location) {
+    try {
+        return Get-Content $location -Raw | ConvertFrom-Json
+    } catch {
+        throw "Error loading JSON file ${location}: $_"
+    }
 }
 
-function Load-Template {
-    param (
-        [string]$fileName,
-        [string]$basePath
-    )
-    Load-JsonFile -location $basePath + "templates/$fileName.json"
+function Load-Template($fileName) {
+    $templatePath = "templates\$fileName.json"
+    return Load-JsonFile $templatePath
 }
 
-function Process-Leaf {
-    param (
-        [PSObject]$node,
-        [string]$basePath,
-        [PSObject]$parent
-    )
-
-    Write-Output "Processing leaf: $node for parent type $($parent.type)"
+function Process-Leaf($node, $basePath, $parent) {
+    Write-Host "Processing leaf: $node for parent type $($parent.type)"
     $child = $null
 
-    switch ($parent.type) {
-        'tabs' {
-            $child = Load-Template -fileName "tab" -basePath $basePath
-            $child.subTarget = $node.value
-            $child.linkLabel = $node.label
-            $child.cellValue = $parent.parameterName
-            if ($node.default) {
-                $child.style = 'primary'
-            } else {
-                $child.style = 'secondary'
-            }
-        }
-        'parameters' {
-            $child = Load-JsonFile -location "$basePath$node"
-        }
-        'visual' {
-            $child = Load-JsonFile -location "$basePath$($node.item)"
-            if ($node.customWidth) {
-                $child.customWidth = $node.customWidth
-            }
+    if ($parent.type -eq "tabs") {
+        $child = Load-Template "tab"
+        $child.subTarget = $node.value
+        $child.linkLabel = $node.label
+        $child.cellValue = $parent.parameterName
+        $child.style = if ($node.default) { "primary" } else { "secondary" }
+    } elseif ($parent.type -eq "parameters") {
+        $child = Load-JsonFile (Join-Path $basePath $node)
+    } elseif ($node.type -eq "visual") {
+        $child = Load-JsonFile (Join-Path $basePath $node.item)
+        if ($node.ContainsKey("customWidth")) {
+            $w = $node.customWidth
+            $child | Add-Member -NotePropertyName "customWidth" -NotePropertyValue $w
         }
     }
-
     return $child
 }
 
-function Enrich-ParentWithChildren {
-    param (
-        [PSObject]$node,
-        [string]$basePath,
-        [array]$children
-    )
-
+function Enrich-ParentWithChildren($node, $children) {
     $parent = $null
-
-    if (-not $node.type) {
-        $parent = Load-Template -fileName "main" -basePath $basePath
+    if (-not ($node -is [hashtable])) { return $parent }
+    $nodeType = $node.type
+    if (-not $nodeType) {
+        $parent = Load-Template "main"
         $parent.parameters.workbookContent.value.items = $children
-    } else {
-        switch ($node.type) {
-            'group' {
-                $parent = Load-Template -fileName "group" -basePath $basePath
-                $parent.name = $node.name
-                $parent.content.items = $children
-                if ($node.conditionalVisibility) {
-                    $parent.conditionalVisibility = $node.conditionalVisibility[0]
-                }
-            }
-            'tabs' {
-                $parent = Load-Template -fileName "tabs" -basePath $basePath
-                $parent.name = $node.name
-                $parent.content.links = $children
-            }
-            'parameters' {
-                $parent = Load-Template -fileName "parameters" -basePath $basePath
-                $parent.content.parameters = $children
-            }
+    } elseif ($nodeType -eq "group") {
+        $parent = Load-Template "group"
+        $parent.name = $node.name
+        $parent.content = @{ items = $children }
+        if ($node.conditionalVisibility) {
+            $parent.conditionalVisibility = $node.conditionalVisibility[0]
         }
+    } elseif ($nodeType -eq "tabs") {
+        $parent = Load-Template "tabs"
+        $parent.name = $node.name
+        $parent.content = @{ links = $children }
+    } elseif ($nodeType -eq "parameters") {
+        $parent = Load-Template "parameters"
+        $parent.content.parameters = $children
     }
-
-    if ($node.type) {
-        Write-Output "Enriched parent of type '$($node.type)': $parent with children: $children"
+    if ($nodeType) {
+        Write-Host "Enriched parent of type '$nodeType': $parent with children: $children"
     } else {
-        Write-Output "Enriched main parent: $parent with children: $children"
+        Write-Host "Enriched main parent: $parent with children: $children"
     }
-
     return $parent
 }
 
-function Depth-FirstTraversal {
-    param (
-        [PSObject]$node,
-        [string]$basePath,
-        [PSObject]$parent
-    )
-
-    if ($node.items) {
+function Depth-First-Traversal($node, $basePath, $parent = $null) {
+    if ($node -is [hashtable]) {
         $children = @()
-        foreach ($item in $node.items) {
-            $childResult = Depth-FirstTraversal -node $item -basePath $basePath -parent $node
-            if ($childResult) {
-                $children += $childResult
+        if ($node.items) {
+            foreach ($item in $node.items) {
+                if ($item) {
+                    Write-Host "Visiting item: $item"
+                    $children += Depth-First-Traversal $item $basePath $node
+                }
             }
         }
-        return Enrich-ParentWithChildren -node $node -basePath $basePath -children $children
-    } else {
-        return Process-Leaf -node $node -basePath $basePath -parent $parent
+        if ($children.Count -gt 0) {
+            return Enrich-ParentWithChildren $node $children
+        }
     }
+    return Process-Leaf $node $basePath $parent
 }
 
-function Validate-Output {
-    param (
-        [PSObject]$output,
-        [string]$schemaUrl
-    )
 
-    $schema = Invoke-RestMethod -Uri $schemaUrl
+# Main logic
+$inputWorkbook = Load-YamlFile $workbookPath
+$output = Depth-First-Traversal $inputWorkbook.workbook $basePath
 
-    try {
-        $output | ConvertTo-Json -Depth 10 | jq -e --argjson schema $schema 'try . | .parameters.workbookContent.value | . = ($schema | .) | true' > $null
-        Write-Output "JSON output is valid against the schema."
-    } catch {
-        throw "JSON output is invalid: $_"
-    }
-}
-
-function Main {
-    if ($PSCmdlet.MyInvocation.BoundParameters.Count -ne 3) {
-        throw "Usage: script.ps1 <workbook_path> <base_path> <out_path>"
-    }
-
-    $schemaUrl = "https://raw.githubusercontent.com/Microsoft/Application-Insights-Workbooks/master/schema/workbook.json"
-
-    # Load the workbook YAML
-    $inputWorkbook = Load-YamlFile -location $workbookPath
-
-    # Perform depth-first traversal
-    $output = Depth-FirstTraversal -node $inputWorkbook.workbook -basePath $basePath
-
-    # Validate the output JSON
-    Validate-Output -output $output -schemaUrl $schemaUrl
-
-    # Write the output to a file
-    $output | ConvertTo-Json -Depth 10 | Out-File -FilePath $outPath -Force
-}
-
-Main
+$output | ConvertTo-Json -Depth 20 -Compress| Set-Content $outFile
