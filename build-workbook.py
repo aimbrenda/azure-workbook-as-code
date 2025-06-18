@@ -3,6 +3,7 @@ import json
 import sys
 import requests
 from jsonschema import validate, ValidationError
+import os
 
 
 def load_yaml_file(location):
@@ -21,8 +22,8 @@ def load_json_file(location):
         raise Exception(f"Error loading JSON file {location}: {e}")
 
 
-def load_template(file_name, base_path):
-    return load_json_file(f"{base_path}templates/{file_name}.json")
+def load_template(file_name):
+    return load_json_file(os.path.join(os.path.dirname(__file__), 'templates', f'{file_name}.json'))
 
 
 def process_leaf(node, base_path, parent):
@@ -31,7 +32,7 @@ def process_leaf(node, base_path, parent):
     child = None
 
     if parent['type'] == 'tabs':
-        child = load_template('tab', base_path)
+        child = load_template('tab')
         child.update({
             'subTarget': node['value'],
             'linkLabel': node['label'],
@@ -39,16 +40,16 @@ def process_leaf(node, base_path, parent):
             'style': 'primary' if node.get('default') else 'secondary'
         })
     elif parent['type'] == 'parameters':
-        child = load_json_file(f"{base_path}{node}")
+        child = load_json_file(os.path.join(base_path, node))
     elif node['type'] == 'visual':
-        child = load_json_file(f"{base_path}{node['item']}")
+        child = load_json_file(os.path.join(base_path, node['item']))
         if 'customWidth' in node:
             child['customWidth'] = node['customWidth']
 
     return child
 
 
-def enrich_parent_with_children(node, base_path, children):
+def enrich_parent_with_children(node, children):
     """Enrich parent nodes with their processed children."""
     parent = None
 
@@ -57,10 +58,10 @@ def enrich_parent_with_children(node, base_path, children):
 
     node_type = node.get('type')
     if not node_type:
-        parent = load_template('main', base_path)
+        parent = load_template('main')
         parent['parameters']['workbookContent']['value']['items'] = children
     elif node_type == 'group':
-        parent = load_template('group', base_path)
+        parent = load_template('group')
         parent.update({
             'name': node['name'],
             'content': {'items': children}
@@ -68,13 +69,13 @@ def enrich_parent_with_children(node, base_path, children):
         if 'conditionalVisibility' in node:
             parent['conditionalVisibility'] = node['conditionalVisibility'][0]
     elif node_type == 'tabs':
-        parent = load_template('tabs', base_path)
+        parent = load_template('tabs')
         parent.update({
             'name': node['name'],
             'content': {'links': children}
         })
     elif node_type == 'parameters':
-        parent = load_template('parameters', base_path)
+        parent = load_template('parameters')
         parent['content']['parameters'] = children
 
     if node_type:
@@ -90,7 +91,7 @@ def depth_first_traversal(node, base_path, parent=None):
     if isinstance(node, dict):
         children = [depth_first_traversal(item, base_path, node) for item in node.get('items', []) if item]
         if children:
-            return enrich_parent_with_children(node, base_path, children)
+            return enrich_parent_with_children(node, children)
     return process_leaf(node, base_path, parent)
 
 
@@ -123,7 +124,7 @@ def main():
 
     # Write the output to a file
     with open(out_path, 'w') as outf:
-        json.dump(output, outf, indent=2)
+        outf.write(json.dumps(output, indent=2))
 
 
 if __name__ == '__main__':
